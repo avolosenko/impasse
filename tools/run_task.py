@@ -17,6 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from harness import servers  # noqa: E402
 from harness.config import Config  # noqa: E402
 from harness.llm import LLMClient  # noqa: E402
+from harness.react import run_b0  # noqa: E402
+from harness.results import append_rows, row  # noqa: E402
 from harness.skills import SkillLibrary  # noqa: E402
 from harness.tote import Tote, ToteConfig  # noqa: E402
 
@@ -32,6 +34,10 @@ def main() -> int:
     p.add_argument("--skills", type=Path, default=None, help="skill library dir (default: none)")
     p.add_argument("--no-server", action="store_true", help="use the running server as is")
     p.add_argument("--max-llm-calls", type=int, default=150)
+    p.add_argument("--breadth", type=int, default=1, help="K parallel hypotheses (<= server slots)")
+    p.add_argument("--b0", action="store_true", help="single ReAct agent baseline instead of TOTE")
+    p.add_argument("--config-id", default="dev", help="run configuration id for results (B1, B2, ...)")
+    p.add_argument("--results", type=Path, default=None, help="CSV to append to (default results/<run_id>.csv)")
     a = p.parse_args()
     cfg = Config.load()
 
@@ -42,13 +48,21 @@ def main() -> int:
     run_id = a.run_id or time.strftime(f"%Y%m%d-%H%M%S-{a.model}-s{a.seed}")
     interp = LLMClient.for_role(cfg, "interpreter")
     worker = LLMClient.for_role(cfg, "worker")
-    tc = ToteConfig(seed=a.seed, max_llm_calls=a.max_llm_calls)
+    tc = ToteConfig(seed=a.seed, max_llm_calls=a.max_llm_calls, breadth=a.breadth)
     results = []
     for task in a.tasks:
-        t = Tote(task, ROOT / "runs" / run_id, interp, worker, SkillLibrary(a.skills), tc,
-                 escalation_dir=ROOT / "escalations" / run_id)
-        o = t.run()
+        if a.b0:
+            o = run_b0(task, ROOT / "runs" / run_id, worker, a.max_llm_calls, a.seed,
+                       escalation_dir=ROOT / "escalations" / run_id)
+        else:
+            o = Tote(task, ROOT / "runs" / run_id, interp, worker, SkillLibrary(a.skills), tc,
+                     escalation_dir=ROOT / "escalations" / run_id).run()
         results.append(o.__dict__)
+        append_rows(a.results or ROOT / "results" / f"{run_id}.csv",
+                    [row(o.__dict__, run_id=run_id, task_dir=task, config=a.config_id, model=a.model,
+                         seed=a.seed, library_version=a.skills.name if a.skills else "none",
+                         orchestration="B0" if a.b0 else "FIX2", breadth=1 if a.b0 else a.breadth,
+                         max_depth=1 if a.b0 else 2)])
         print(json.dumps({k: o.__dict__[k] for k in
                           ("task_id", "solved", "escalated", "reason", "iterations", "llm_calls",
                            "regressions", "wall_time_s")}, ensure_ascii=False), flush=True)

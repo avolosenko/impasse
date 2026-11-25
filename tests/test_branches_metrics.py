@@ -1,0 +1,169 @@
+import csv
+import json
+import re
+from pathlib import Path
+
+from harness.metrics import changed_lines, hypothesis_hit, patch_targets
+from harness.results import FIELDS, append_rows, row
+from harness.tote import Tote, ToteConfig
+from tests.mock_llm import MockLLM, act, hyp, plan
+
+TOY = Path(__file__).resolve().parent.parent / "bench" / "toy"
+FIX = dict(path="windows.py", old="range(len(xs) - k)", new="range(len(xs) - k + 1)")
+BREAK = dict(path="windows.py", old="out = []", new="out = [0]")
+
+
+def finish():
+    return act("finish", status="done", hypothesis="h", evidence="e", changes="c")
+
+
+# --- operation-type restrictions ------------------------------------------
+
+def test_read_only_operation_cannot_patch(tmp_path):
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs",
+             MockLLM([hyp(), plan("read_more_code"), hyp(), plan("local_fix")]),
+             MockLLM([act("apply_patch", **FIX), finish(), act("apply_patch", **FIX), finish()]))
+    o = t.run()
+    assert o.solved and o.iterations == 2 and o.op_violations == 1
+    att = [json.loads(l) for l in (tmp_path / "runs/toy_off_by_one/attempts.jsonl").read_text().splitlines()]
+    assert att[0]["op_violations"] == 1 and att[0]["diff"] == ""
+    obs = t.worker.calls[1]["messages"][-1]["content"]
+    assert "not allowed in this operation" in obs
+
+
+def test_add_logging_edits_are_reverted(tmp_path):
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs",
+             MockLLM([hyp(), plan("add_logging")]), MockLLM([act("apply_patch", **FIX), finish()]),
+             cfg=ToteConfig(max_iterations=1))
+    o = t.run()
+    assert not o.solved and o.reason == "max_iterations"
+    assert "range(len(xs) - k)" in (tmp_path / "runs/toy_off_by_one/workspace/windows.py").read_text()
+
+
+# --- hypothesis_hit ---------------------------------------------------------
+
+def test_changed_lines_and_targets():
+    assert changed_lines((TOY / "toy_two_modules" / "solution.patch").read_text()) == {"units.py": {4}}
+    pt = patch_targets(TOY / "toy_two_modules")
+    assert pt.functions == {"units.py": {"to_minutes"}}
+    assert patch_targets(TOY) is None
+
+
+def test_hypothesis_hit_rules():
+    pt = patch_targets(TOY / "toy_two_modules")
+    assert hypothesis_hit("units.py:to_minutes", pt)
+    assert hypothesis_hit("`units.py:to_minutes()`", pt)
+    assert hypothesis_hit("units.py:8", pt)          # within ±5 lines
+    assert hypothesis_hit("to_minutes", pt)          # function only
+    assert not hypothesis_hit("schedule.py:total_minutes", pt)  # symptom, not cause
+    assert not hypothesis_hit("units.py:20", pt)
+    assert not hypothesis_hit("schedule.py:to_minutes", pt)     # wrong file
+    assert hypothesis_hit("x.py:f", None) is None
+
+
+def test_hit_recorded_in_outcome(tmp_path):
+    t = Tote(TOY / "toy_two_modules", tmp_path / "runs",
+             MockLLM([hyp(location="schedule.py:total_minutes"), plan("read_more_code"),
+                      hyp(location="units.py:to_minutes"), plan()]),
+             MockLLM([finish(), act("apply_patch", path="units.py", old="int(minutes) * 60 + int(hours)",
+                                   new="int(hours) * 60 + int(minutes)"), finish()]))
+    o = t.run()
+    assert o.solved and o.hypothesis_hit is True and o.first_hit_iteration == 2
+
+
+# --- breadth K ----------------------------------------------------------------
+
+def branch_llm(good_category: str):
+    """Interpreter + worker in one: the branch assigned `good_category` fixes the bug,
+    every other branch makes a harmless no-op edit or a regression."""
+    def reply(messages, kw):
+        sys_msg = messages[0]["content"]
+        if sys_msg.startswith("You are a debugging interpreter"):
+            m = re.search(r"category '(\w+)'", sys_msg)
+            cat = m.group(1) if m else "none"
+            return hyp(category=cat, claim=f"claim-{cat}")
+        if sys_msg.startswith("Choose one operation"):
+            return plan("local_fix")
+        task = messages[1]["content"]
+        if len(messages) > 2:
+            return finish()
+        if f"claim-{good_category}" in task:
+            return act("apply_patch", **FIX)
+        if "claim-state_mutation" in task:
+            return act("apply_patch", **BREAK)
+        return act("read_file", path="windows.py")
+    return reply
+
+
+def test_breadth_assigns_distinct_categories_and_code_selects_winner(tmp_path):
+    llm = MockLLM(branch_llm("data_flow"))
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs", llm, llm, cfg=ToteConfig(breadth=3, seed=1))
+    o = t.run()
+    assert o.solved and o.iterations == 1 and o.hypotheses_total == 3
+    att = [json.loads(l) for l in (tmp_path / "runs/toy_off_by_one/attempts.jsonl").read_text().splitlines()]
+    assert [a["branch_category"] for a in att] == ["boundaries", "state_mutation", "data_flow"]
+    assert [a["winner"] for a in att] == [False, False, True]
+    assert att[1]["rolled_back"] is True and o.regressions == 1
+    assert "range(len(xs) - k + 1)" in (tmp_path / "runs/toy_off_by_one/workspace/windows.py").read_text()
+    assert not list((tmp_path / "runs/toy_off_by_one").glob("workspace.b*"))
+
+
+def test_breadth_rotates_categories_after_failure(tmp_path):
+    llm = MockLLM(branch_llm("call_order"))   # 5th category: needs a second iteration with K=3
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs", llm, llm, cfg=ToteConfig(breadth=3, seed=1))
+    o = t.run()
+    assert o.solved and o.iterations == 2
+    att = [json.loads(l) for l in (tmp_path / "runs/toy_off_by_one/attempts.jsonl").read_text().splitlines()]
+    assert [a["branch_category"] for a in att if a["iter"] == 2] == ["condition_logic", "types_formats", "call_order"]
+
+
+def test_breadth_seeds_are_deterministic(tmp_path):
+    seeds = []
+    for run in range(2):
+        llm = MockLLM(branch_llm("data_flow"))
+        Tote(TOY / "toy_off_by_one", tmp_path / f"r{run}", llm, llm, cfg=ToteConfig(breadth=3, seed=7)).run()
+        seeds.append(sorted(c.get("seed") for c in llm.calls))
+    assert seeds[0] == seeds[1] and len(set(seeds[0])) == len(seeds[0])
+
+
+# --- results CSV ----------------------------------------------------------------
+
+def test_results_row_and_csv(tmp_path):
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs", MockLLM([hyp(), plan()]),
+             MockLLM([act("apply_patch", **FIX), finish()]))
+    o = t.run()
+    r = row(o.__dict__, run_id="r1", task_dir=TOY / "toy_off_by_one", config="B1", model="qwen-9b", seed=1)
+    assert set(r) == set(FIELDS)
+    assert (r["solved"], r["hypothesis_hit"], r["first_hit_iteration"], r["orchestration"]) == (1, 1, 1, "FIX2")
+    out = tmp_path / "res.csv"
+    append_rows(out, [r])
+    append_rows(out, [r])
+    rows = list(csv.DictReader(out.open()))
+    assert len(rows) == 2 and rows[0]["task_id"] == "toy_off_by_one"
+
+
+# --- B0 single ReAct agent ------------------------------------------------------
+
+def test_b0_solves_with_one_context(tmp_path):
+    from harness.react import run_b0
+    llm = MockLLM([act("read_file", path="windows.py"), act("apply_patch", **FIX), act("run_tests"), finish()])
+    o = run_b0(TOY / "toy_off_by_one", tmp_path / "runs", llm, seed=1)
+    assert o.solved and o.llm_calls == 4 and o.iterations == 4
+    assert len(llm.calls[-1]["messages"]) == 8   # one growing context
+    assert "Failing tests: 2" in llm.calls[0]["messages"][1]["content"]
+
+
+def test_b0_budget_and_failure(tmp_path):
+    from harness.llm import LLMError
+    from harness.react import run_b0
+    o = run_b0(TOY / "toy_off_by_one", tmp_path / "runs",
+               MockLLM([act("read_file", path="windows.py", start=str(i)) for i in range(1, 20)]),
+               max_llm_calls=5, escalation_dir=tmp_path / "esc")
+    assert not o.solved and o.reason.startswith(("budget", "step_limit")) and o.llm_calls == 5
+    assert (tmp_path / "esc/toy_off_by_one/summary.json").exists()
+
+    class Overflow(MockLLM):
+        def chat(self, messages, **kw):
+            raise LLMError("HTTP 400: the request exceeds the available context size")
+    o = run_b0(TOY / "toy_off_by_one", tmp_path / "runs2", Overflow([]))
+    assert o.reason == "context_overflow"
