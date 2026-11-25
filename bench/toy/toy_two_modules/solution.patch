@@ -1,0 +1,7 @@
+--- a/units.py
++++ b/units.py
+@@ -2,3 +2,3 @@
+     """Parse a duration "H:MM" into minutes."""
+     hours, minutes = text.strip().split(":")
+-    return int(minutes) * 60 + int(hours)
++    return int(hours) * 60 + int(minutes)
