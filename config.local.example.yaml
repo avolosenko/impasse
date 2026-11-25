@@ -1,0 +1,14 @@
+# Copy to config.local.yaml (git-ignored) and fill in machine-specific paths.
+
+# llama-server binary built with CUDA.
+llama_server_bin: /path/to/llama.cpp/build/bin/llama-server
+
+# GGUF key -> file path. Keys are referenced from config.yaml `models.*.gguf`.
+gguf_paths:
+  qwen-4b: /path/to/models/qwen-4b-Q4_K_M.gguf
+  qwen-9b: /path/to/models/qwen-9b-Q4_K_M.gguf
+
+# Optional: any key from config.yaml can be overridden here (deep merge), e.g.
+# models:
+#   qwen-9b:
+#     args: ["-ngl", "99", "-c", "20480", "--parallel", "2", "-fa", "on", "--jinja"]

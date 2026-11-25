@@ -1,0 +1,168 @@
+{
+  "vram_baseline": {
+    "total_mb": 12227,
+    "used_mb": 2145,
+    "free_mb": 9800
+  },
+  "fits": true,
+  "main_startup_s": 3.95,
+  "aux_startup_s": 2.58,
+  "vram_after_load": {
+    "total_mb": 12227,
+    "used_mb": 10776,
+    "free_mb": 1169
+  },
+  "main": {
+    "server": "main",
+    "model": "qwen-9b",
+    "timestamp": "2026-11-24T20:33:39",
+    "server_info": {
+      "model_file": "Qwen3.5-9B-Q4_K_M.gguf",
+      "build_info": "b1-e6443bd",
+      "total_slots": 1,
+      "n_ctx_per_slot": 8192,
+      "slot_ctx_ok": true
+    },
+    "vram_after_load": {
+      "total_mb": 12227,
+      "used_mb": 10776,
+      "free_mb": 1169,
+      "free_ok": true
+    },
+    "structured_output": {
+      "json_schema": {
+        "valid": 3,
+        "trials": 3,
+        "errors": [],
+        "samples": [
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to read the stack implementation to understand why it's failing on an empty pop.\"}",
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to inspect the stack implementation to understand why it's failing on an empty pop.\"}"
+        ]
+      },
+      "json_object": {
+        "valid": 3,
+        "trials": 3,
+        "errors": [],
+        "samples": [
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to read the stack implementation to understand why it's failing on an empty pop.\"}",
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to inspect the stack implementation to understand why it's failing on an empty pop.\"}"
+        ]
+      },
+      "grammar": {
+        "valid": 3,
+        "trials": 3,
+        "errors": [],
+        "samples": [
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to read the stack implementation to understand why it's failing on an empty pop.\"}",
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to inspect the stack implementation to understand why it's failing on an empty pop.\"}"
+        ]
+      }
+    },
+    "thinking_off": {
+      "enable_thinking": false,
+      "reasoning_present": false,
+      "answer": "391",
+      "completion_tokens": 4
+    },
+    "throughput": {
+      "n1": {
+        "requests": 1,
+        "wall_s": 3.03,
+        "aggregate_tok_s": 84.5,
+        "per_request_tok_s": 84.5
+      }
+    },
+    "long_prompt": {
+      "ok": true,
+      "prompt_tokens": 5587,
+      "prompt_tok_s": 3997.5,
+      "latency_s": 1.88
+    }
+  },
+  "aux": {
+    "server": "aux",
+    "model": "qwen-4b",
+    "timestamp": "2026-11-24T20:33:51",
+    "server_info": {
+      "model_file": "Qwen3.5-4B-Q4_K_M.gguf",
+      "build_info": "b1-e6443bd",
+      "total_slots": 2,
+      "n_ctx_per_slot": 8192,
+      "slot_ctx_ok": true
+    },
+    "vram_after_load": {
+      "total_mb": 12227,
+      "used_mb": 10786,
+      "free_mb": 1159,
+      "free_ok": true
+    },
+    "structured_output": {
+      "json_schema": {
+        "valid": 3,
+        "trials": 3,
+        "errors": [],
+        "samples": [
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to see the current implementation of the stack to understand why popping from an empty list is not raising an error.\"}",
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"Need to read the stack.py file to understand the current implementation and identify why popping from an empty list causes an Inde"
+        ]
+      },
+      "json_object": {
+        "valid": 3,
+        "trials": 3,
+        "errors": [],
+        "samples": [
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to see the current implementation of the stack to understand why popping from an empty list is not raising an error.\"}",
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"Need to read the stack.py file to understand the current implementation and identify why popping from an empty list causes an Inde"
+        ]
+      },
+      "grammar": {
+        "valid": 3,
+        "trials": 3,
+        "errors": [],
+        "samples": [
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to see the current implementation of the stack to understand why popping from an empty list is not raising an error.\"}",
+          "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"Need to read the stack.py file to understand the current implementation and identify why popping from an empty list causes an Inde"
+        ]
+      }
+    },
+    "thinking_off": {
+      "enable_thinking": false,
+      "reasoning_present": false,
+      "answer": "391",
+      "completion_tokens": 4
+    },
+    "throughput": {
+      "n1": {
+        "requests": 1,
+        "wall_s": 2.1,
+        "aggregate_tok_s": 121.8,
+        "per_request_tok_s": 121.8
+      },
+      "n2": {
+        "requests": 2,
+        "wall_s": 2.65,
+        "aggregate_tok_s": 193.5,
+        "per_request_tok_s": 97.5
+      }
+    },
+    "long_prompt": {
+      "ok": true,
+      "prompt_tokens": 5587,
+      "prompt_tok_s": 5893.3,
+      "latency_s": 1.43
+    }
+  },
+  "concurrent": {
+    "wall_s": 4.92,
+    "per_server_tok_s": [
+      52.0,
+      62.6
+    ]
+  },
+  "vram_under_load": {
+    "total_mb": 12227,
+    "used_mb": 10796,
+    "free_mb": 1149
+  },
+  "kv_cache": "q8_0"
+}

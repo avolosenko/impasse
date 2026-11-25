@@ -1,0 +1,61 @@
+# Shared configuration. No machine-specific paths here:
+# those live in config.local.yaml (see config.local.example.yaml).
+
+# Servers. Each server is one llama-server process. Base mode: one server ("main")
+# serving one model at a time; models are switched between run series.
+servers:
+  main:
+    host: 127.0.0.1
+    port: 8080
+  aux:            # used only by the optional mixed mode (second model on the same GPU)
+    host: 127.0.0.1
+    port: 8081
+
+# Role -> server binding. Adding a second GPU later only requires editing this block.
+roles:
+  interpreter: main
+  worker: main
+
+# Models. `gguf` is a key into config.local.yaml `gguf_paths:` (the actual file path).
+# `args` are passed to llama-server verbatim; -m/--host/--port are added automatically.
+# Values calibrated in stage 1 (reports/stage-1.md). GGUF: unsloth/Qwen3.5-{4B,9B}-GGUF, Q4_K_M.
+models:
+  # Qwen3.5 (hybrid Gated DeltaNet + attention): KV cache is small, so both
+  # models fit 4 slots x 16k on 12 GB (stage-1 measurements).
+  qwen-4b:
+    gguf: qwen-4b
+    parallel: 4
+    args: ["-ngl", "99", "-c", "65536", "--parallel", "4", "-fa", "on", "--jinja"]
+  qwen-9b:
+    gguf: qwen-9b
+    parallel: 4
+    args: ["-ngl", "99", "-c", "65536", "--parallel", "4", "-fa", "on", "--jinja"]
+
+# Mixed mode (9B interpreter + 4B workers on one GPU). Stage 1: with f16 KV only
+# 864 MB stay free (< 1 GB reserve); with q8_0 KV 1149 MB — too tight given the
+# 1.5-2.4 GB that Windows itself holds. Excluded from the matrix (reports/stage-1.md).
+mixed:
+  enabled: false
+  main:   # interpreter
+    model: qwen-9b
+    args: ["-ngl", "99", "-c", "8192", "--parallel", "1", "-fa", "on", "--jinja"]
+  aux:    # workers
+    model: qwen-4b
+    args: ["-ngl", "99", "-c", "16384", "--parallel", "2", "-fa", "on", "--jinja"]
+
+llm:
+  temperature: 0.65
+  top_p: 0.95
+  max_tokens: 1024
+  request_timeout_s: 600
+  enable_thinking: false
+  # How to constrain output to a JSON schema. One of:
+  #   json_schema  - response_format {type: json_schema, json_schema: {schema}}
+  #   json_object  - response_format {type: json_object, schema}
+  #   grammar      - raw GBNF in the `grammar` field (schema converted by caller)
+  # Stage-1 smoke test determines which works with the local build.
+  structured_output: json_schema
+
+server_control:
+  health_timeout_s: 300
+  state_dir: .servers
