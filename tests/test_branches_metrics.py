@@ -167,3 +167,37 @@ def test_b0_budget_and_failure(tmp_path):
             raise LLMError("HTTP 400: the request exceeds the available context size")
     o = run_b0(TOY / "toy_off_by_one", tmp_path / "runs2", Overflow([]))
     assert o.reason == "context_overflow"
+
+
+# --- max_depth 3: minimal_repro child TOTE -------------------------------------
+
+REPRO_OK = "from windows import window_sums\nassert window_sums([1, 2, 3, 4], 2) == [3, 5, 7], window_sums([1, 2, 3, 4], 2)"
+REPRO_WEAK = "from windows import window_sums\nprint(window_sums([1, 2, 3, 4], 2))"
+
+
+def test_depth3_repro_child_retries_until_its_test_passes(tmp_path):
+    worker = MockLLM([act("run_python", code=REPRO_WEAK), finish(),          # child iter 1: exits 0 -> not a repro
+                      act("run_python", code=REPRO_OK), finish(),            # child iter 2: AssertionError -> done
+                      act("apply_patch", **FIX), finish()])                  # parent iter 2: fix
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs", MockLLM([hyp(), plan("minimal_repro"), hyp(), plan()]),
+             worker, cfg=ToteConfig(max_depth=3))
+    o = t.run()
+    assert o.solved and o.iterations == 2 and o.max_depth_reached == 3
+    att = [json.loads(l) for l in (tmp_path / "runs/toy_off_by_one/attempts.jsonl").read_text().splitlines()]
+    assert att[0]["result"]["status"] == "done" and "repro reproduces AssertionError" in att[0]["result"]["evidence"]
+    assert "did not reproduce AssertionError" in worker.calls[2]["messages"][1]["content"]
+    # the parent sees the child's contract in its attempt log, not the child's history
+    assert "minimal_repro" in t.interpreter.calls[2]["messages"][1]["content"]
+
+
+def test_depth3_child_gives_up_and_depth2_has_no_child(tmp_path):
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "a", MockLLM([hyp(), plan("minimal_repro")]),
+             MockLLM([act("run_python", code=REPRO_WEAK), finish()] * 3),
+             cfg=ToteConfig(max_depth=3, max_iterations=1))
+    o = t.run()
+    att = json.loads((tmp_path / "a/toy_off_by_one/attempts.jsonl").read_text().splitlines()[0])
+    assert att["result"]["status"] == "fail" and o.llm_calls == 2 + 6
+    t2 = Tote(TOY / "toy_off_by_one", tmp_path / "b", MockLLM([hyp(), plan("minimal_repro")]),
+              MockLLM([act("run_python", code=REPRO_WEAK), finish()]), cfg=ToteConfig(max_depth=2, max_iterations=1))
+    o2 = t2.run()
+    assert o2.max_depth_reached == 2 and o2.llm_calls == 4
