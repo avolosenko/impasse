@@ -14,7 +14,10 @@
 
 - RTX 5070, 12227 MiB; **~1.5 GB VRAM занято до запуска чего-либо** (Windows/WSL) — реально доступно ~10.5 GB, это учитывается в запасе ≥ 1 GB.
 - CUDA toolkit 13.2 (`/usr/local/cuda`), cmake, gcc есть.
-- **llama.cpp не собран, GGUF-моделей нет.** По разделу 0 — жду подтверждения.
+- **llama.cpp** собран с CUDA вне репозитория: commit `e6443bd7eb970d940b0669cd9ea0d82d91d620a1`, `-DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=120` (cmake превращает в `120a`), Release, GCC 15.2, CUDA 13.2.86. Собраны цели `llama-server` и `llama-cli`. `llama-server --list-devices`: `CUDA0: RTX 5070 (12199 MiB, 11018 MiB free)`.
+  - Для сборки понадобился пакет `cuda-nvml-dev-13-2`: текущий llama.cpp всегда подключает `nvml.h`, а в урезанной установке CUDA его нет.
+  - Флаги сборки подтверждены: `-fa on|off|auto`, `--jinja` (включён по умолчанию), `-ctk/-ctv`, `-np/--parallel`. Есть также серверный `--reasoning on|off|auto`; переключать thinking будем запросом через `chat_template_kwargs`, `--reasoning` держим как запасной вариант, если шаблон модели проигнорирует параметр.
+- **GGUF-моделей нет** — ждём выбора конкретных файлов.
 - Системный Python 3.14; для проекта создан `.venv` на Python 3.12 (зависимости: httpx, pydantic, pyyaml, pytest).
 
 ## Не сделано (нужны llama.cpp и модели)
