@@ -16,21 +16,24 @@ roles:
   interpreter: main
   worker: main
 
-# Models. `gguf` is a key into config.local.yaml `models:` (the actual file path).
+# Models. `gguf` is a key into config.local.yaml `gguf_paths:` (the actual file path).
 # `args` are passed to llama-server verbatim; -m/--host/--port are added automatically.
-# Numbers are starting points; stage 1 calibrates them (reports/stage-1.md).
+# Values calibrated in stage 1 (reports/stage-1.md). GGUF: unsloth/Qwen3.5-{4B,9B}-GGUF, Q4_K_M.
 models:
+  # Qwen3.5 (hybrid Gated DeltaNet + attention): KV cache is small, so both
+  # models fit 4 slots x 16k on 12 GB (stage-1 measurements).
   qwen-4b:
     gguf: qwen-4b
     parallel: 4
-    args: ["-ngl", "99", "-c", "32768", "--parallel", "4", "-fa", "on", "--jinja"]
+    args: ["-ngl", "99", "-c", "65536", "--parallel", "4", "-fa", "on", "--jinja"]
   qwen-9b:
     gguf: qwen-9b
-    parallel: 2
-    args: ["-ngl", "99", "-c", "24576", "--parallel", "2", "-fa", "on", "--jinja"]
+    parallel: 4
+    args: ["-ngl", "99", "-c", "65536", "--parallel", "4", "-fa", "on", "--jinja"]
 
-# Mixed mode (9B interpreter + 4B workers on one GPU). Disabled until the stage-1
-# smoke test proves both fit with >= 8k tokens per slot.
+# Mixed mode (9B interpreter + 4B workers on one GPU). Stage 1: with f16 KV only
+# 864 MB stay free (< 1 GB reserve); with q8_0 KV 1149 MB — too tight given the
+# 1.5-2.4 GB that Windows itself holds. Excluded from the matrix (reports/stage-1.md).
 mixed:
   enabled: false
   main:   # interpreter

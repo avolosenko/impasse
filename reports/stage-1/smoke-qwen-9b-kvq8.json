@@ -1,0 +1,79 @@
+{
+  "server": "main",
+  "model": "qwen-9b",
+  "timestamp": "2026-11-24T20:32:20",
+  "server_info": {
+    "model_file": "Qwen3.5-9B-Q4_K_M.gguf",
+    "build_info": "b1-e6443bd",
+    "total_slots": 4,
+    "n_ctx_per_slot": 16384,
+    "slot_ctx_ok": true
+  },
+  "vram_after_load": {
+    "total_mb": 12227,
+    "used_mb": 8823,
+    "free_mb": 3122,
+    "free_ok": true
+  },
+  "structured_output": {
+    "json_schema": {
+      "valid": 3,
+      "trials": 3,
+      "errors": [],
+      "samples": [
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to read the stack implementation to understand why it's failing on an empty pop.\"}",
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to inspect the stack implementation to understand why it's failing on an empty pop.\"}"
+      ]
+    },
+    "json_object": {
+      "valid": 3,
+      "trials": 3,
+      "errors": [],
+      "samples": [
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to read the stack implementation to understand why it's failing on an empty pop.\"}",
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to inspect the stack implementation to understand why it's failing on an empty pop.\"}"
+      ]
+    },
+    "grammar": {
+      "valid": 3,
+      "trials": 3,
+      "errors": [],
+      "samples": [
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to read the stack implementation to understand why it's failing on an empty pop.\"}",
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to inspect the stack implementation to understand why it's failing on an empty pop.\"}"
+      ]
+    }
+  },
+  "thinking_off": {
+    "enable_thinking": false,
+    "reasoning_present": false,
+    "answer": "391",
+    "completion_tokens": 4
+  },
+  "throughput": {
+    "n1": {
+      "requests": 1,
+      "wall_s": 3.16,
+      "aggregate_tok_s": 80.9,
+      "per_request_tok_s": 81.0
+    },
+    "n4": {
+      "requests": 4,
+      "wall_s": 4.55,
+      "aggregate_tok_s": 224.9,
+      "per_request_tok_s": 56.4
+    }
+  },
+  "long_prompt": {
+    "ok": true,
+    "prompt_tokens": 5587,
+    "prompt_tok_s": 3920.7,
+    "latency_s": 2.15
+  },
+  "vram_baseline": {
+    "total_mb": 12227,
+    "used_mb": 2167,
+    "free_mb": 9778
+  },
+  "kv_cache": "q8_0"
+}

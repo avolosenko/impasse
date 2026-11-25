@@ -1,0 +1,79 @@
+{
+  "server": "main",
+  "model": "qwen-4b",
+  "timestamp": "2026-11-24T20:31:40",
+  "server_info": {
+    "model_file": "Qwen3.5-4B-Q4_K_M.gguf",
+    "build_info": "b1-e6443bd",
+    "total_slots": 4,
+    "n_ctx_per_slot": 16384,
+    "slot_ctx_ok": true
+  },
+  "vram_after_load": {
+    "total_mb": 12227,
+    "used_mb": 6549,
+    "free_mb": 5396,
+    "free_ok": true
+  },
+  "structured_output": {
+    "json_schema": {
+      "valid": 3,
+      "trials": 3,
+      "errors": [],
+      "samples": [
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to see the current implementation of the stack to understand why popping from an empty list is not raising an error.\"}",
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"Need to read the stack.py file to understand the current implementation and identify why popping from an empty list causes an Inde"
+      ]
+    },
+    "json_object": {
+      "valid": 3,
+      "trials": 3,
+      "errors": [],
+      "samples": [
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to see the current implementation of the stack to understand why popping from an empty list is not raising an error.\"}",
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"Need to read the stack.py file to understand the current implementation and identify why popping from an empty list causes an Inde"
+      ]
+    },
+    "grammar": {
+      "valid": 3,
+      "trials": 3,
+      "errors": [],
+      "samples": [
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"I need to see the current implementation of the stack to understand why popping from an empty list is not raising an error.\"}",
+        "{\"action\": \"read_file\", \"args\": {\"path\": \"src/stack.py\"}, \"thought\": \"Need to read the stack.py file to understand the current implementation and identify why popping from an empty list causes an Inde"
+      ]
+    }
+  },
+  "thinking_off": {
+    "enable_thinking": false,
+    "reasoning_present": false,
+    "answer": "391",
+    "completion_tokens": 4
+  },
+  "throughput": {
+    "n1": {
+      "requests": 1,
+      "wall_s": 2.13,
+      "aggregate_tok_s": 120.4,
+      "per_request_tok_s": 120.4
+    },
+    "n4": {
+      "requests": 4,
+      "wall_s": 3.53,
+      "aggregate_tok_s": 290.0,
+      "per_request_tok_s": 72.8
+    }
+  },
+  "long_prompt": {
+    "ok": true,
+    "prompt_tokens": 5587,
+    "prompt_tok_s": 5667.8,
+    "latency_s": 1.63
+  },
+  "vram_baseline": {
+    "total_mb": 12227,
+    "used_mb": 2167,
+    "free_mb": 9778
+  },
+  "kv_cache": "q8_0"
+}
