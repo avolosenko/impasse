@@ -1,0 +1,19 @@
+# Machine-specific config (paths to models, llama.cpp)
+config.local.yaml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Model weights and llama.cpp builds
+*.gguf
+llama.cpp/
+
+# Full run directories (large transcripts) and server runtime state
+runs/
+.servers/
+
+# Unsealed test split must never be committed
+bench/test/
