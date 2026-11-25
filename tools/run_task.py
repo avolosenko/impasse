@@ -36,6 +36,8 @@ def main() -> int:
     p.add_argument("--max-llm-calls", type=int, default=150)
     p.add_argument("--breadth", type=int, default=1, help="K parallel hypotheses (<= server slots)")
     p.add_argument("--max-depth", type=int, default=2, choices=[2, 3])
+    p.add_argument("--detector-policy", choices=["strict", "lenient"], default="strict",
+                   help="strict = SPEC 3.6 literally; lenient = see harness/tote.py ToteConfig")
     p.add_argument("--b0", action="store_true", help="single ReAct agent baseline instead of TOTE")
     p.add_argument("--config-id", default="dev", help="run configuration id for results (B1, B2, ...)")
     p.add_argument("--results", type=Path, default=None, help="CSV to append to (default results/<run_id>.csv)")
@@ -50,7 +52,7 @@ def main() -> int:
     interp = LLMClient.for_role(cfg, "interpreter")
     worker = LLMClient.for_role(cfg, "worker")
     tc = ToteConfig(seed=a.seed, max_llm_calls=a.max_llm_calls, breadth=a.breadth,
-                    max_depth=a.max_depth)
+                    max_depth=a.max_depth, detector_policy=a.detector_policy)
     results = []
     for task in a.tasks:
         if a.b0:
@@ -64,7 +66,8 @@ def main() -> int:
                     [row(o.__dict__, run_id=run_id, task_dir=task, config=a.config_id, model=a.model,
                          seed=a.seed, library_version=a.skills.name if a.skills else "none",
                          orchestration="B0" if a.b0 else "FIX2", breadth=1 if a.b0 else a.breadth,
-                         max_depth=1 if a.b0 else a.max_depth)])
+                         max_depth=1 if a.b0 else a.max_depth,
+                         detector_policy="" if a.b0 else a.detector_policy)])
         print(json.dumps({k: o.__dict__[k] for k in
                           ("task_id", "solved", "escalated", "reason", "iterations", "llm_calls",
                            "regressions", "wall_time_s")}, ensure_ascii=False), flush=True)

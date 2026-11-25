@@ -221,3 +221,51 @@ def test_attempt_log_shows_stage_results_to_the_model(tmp_path):
     assert t.run().solved
     second_plan_prompt = t.interpreter.calls[3]["messages"][1]["content"]
     assert "result: done — windows.py:6 range stops one early" in second_plan_prompt
+
+
+# --- detector policy: strict (SPEC 3.6 literally) vs lenient -------------------
+
+DIAG = [act("read_file", path="windows.py"), finish()]
+
+
+def test_strict_counts_diagnostic_iterations(tmp_path):
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "r", MockLLM([hyp(), plan("read_more_code")] * 4),
+             MockLLM(DIAG * 4), cfg=ToteConfig(detector_policy="strict"))
+    o = t.run()
+    assert o.escalated and o.iterations == 3 and "same_error_x3" in o.reason
+
+
+def test_lenient_ignores_diagnostic_iterations(tmp_path):
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "r",
+             MockLLM([hyp(), plan("read_more_code")] * 4 + [hyp(), plan()]),
+             MockLLM(DIAG * 4 + [act("apply_patch", **FIX), finish()]), cfg=ToteConfig(detector_policy="lenient"))
+    o = t.run()
+    assert o.solved and o.iterations == 5 and o.detector_fires == {}
+
+
+def test_lenient_gives_one_retry_then_escalates(tmp_path):
+    # useless (but different) edits: same error on edit-iterations 1-3 -> fire, retry granted;
+    # iteration 4 -> fires again -> escalate
+    worker = []
+    for i in range(6):
+        worker += [act("apply_patch", path="windows.py", old="    return out",
+                       new="    return out" + " " * (i + 1)), finish()]
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "r", MockLLM([hyp(), plan()] * 6), MockLLM(worker),
+             cfg=ToteConfig(detector_policy="lenient"))
+    o = t.run()
+    assert o.escalated and o.iterations == 4 and o.detector_fires["same_error_x3"] == 2
+
+
+def test_lenient_step_limit_retry(tmp_path):
+    loop = [act("read_file", path="windows.py", start=str(i)) for i in range(1, 9)]
+    for policy, iters in (("strict", 1), ("lenient", 2)):
+        t = Tote(TOY / "toy_off_by_one", tmp_path / policy, MockLLM([hyp(), plan("read_more_code")] * 3),
+                 MockLLM(loop * 3), cfg=ToteConfig(detector_policy=policy))
+        o = t.run()
+        assert o.escalated and o.iterations == iters and "step_limit" in o.reason, policy
+
+
+def test_bad_policy_rejected(tmp_path):
+    import pytest
+    with pytest.raises(ValueError):
+        Tote(TOY / "toy_off_by_one", tmp_path / "r", MockLLM([]), MockLLM([]), cfg=ToteConfig(detector_policy="x"))

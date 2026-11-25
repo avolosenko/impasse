@@ -28,7 +28,13 @@ class TaskDetectors:
         self.diffs: list[str] = []
         self.states: list[str] = []      # source snapshot hashes after each iteration
 
-    def observe_test(self, signature: str, n_failing: int) -> list[str]:
+    def observe_test(self, signature: str, n_failing: int, edited: bool = True,
+                     count_diagnostic: bool = True) -> list[str]:
+        """`edited`: some branch attempted a code edit this iteration. With
+        count_diagnostic=False (lenient policy) diagnostic-only iterations, which cannot
+        change the error by design, are not counted by same_error / no_progress."""
+        if not edited and not count_diagnostic:
+            return []
         self.signatures.append(signature)
         self.failing.append(n_failing)
         fired = []

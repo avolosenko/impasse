@@ -60,6 +60,10 @@ class ToteConfig:
     subagent_steps: int = 8
     seed: int | None = None
     breadth: int = 1
+    # strict: SPEC 3.6 literally — every iteration counts, a detector with no skill escalates at once.
+    # lenient: same_error/no_progress count only iterations with an attempted edit, and a detector
+    #          with no skill gets one free retry before escalating (like an unhelpful skill would).
+    detector_policy: str = "strict"
     max_depth: int = 2            # 3: minimal_repro opens a child TOTE with its own test
     child_iterations: int = 3
     child_budget_share: float = 0.5
@@ -133,6 +137,9 @@ class Tote:
         self.first_hit_iteration: int | None = None
         self._lock = threading.Lock()
         self.max_depth_reached = 1
+        self.grace_used: set[str] = set()
+        if self.cfg.detector_policy not in ("strict", "lenient"):
+            raise ValueError(f"detector_policy must be strict|lenient, got {self.cfg.detector_policy!r}")
         cf = self.cfg.categories_file
         self.catalog = (yaml.safe_load(Path(cf).read_text())["categories"]
                         if cf and Path(cf).exists() else [])
@@ -175,6 +182,8 @@ class Tote:
             if self.skills.for_trigger(d) and d not in self.skill_tried_for:
                 self.skill_tried_for.add(d)
                 self.pending_triggers.append(d)
+            elif self.cfg.detector_policy == "lenient" and d not in self.grace_used:
+                self.grace_used.add(d)
             else:
                 escalate.append(d)
         return escalate
@@ -366,7 +375,9 @@ class Tote:
             shutil.rmtree(self.dir / f"workspace.b{i}", ignore_errors=True)
         adopted = winner.diff if winner and (k == 1 or winner.final_test.n_failing <= t.n_failing) and not winner.rolled_back else ""
         if winner is not None:
-            fired += self.det.observe_test(new_t.signature, new_t.n_failing)
+            edited = any(b.diff for b in branches)
+            fired += self.det.observe_test(new_t.signature, new_t.n_failing, edited,
+                                           count_diagnostic=self.cfg.detector_policy == "strict")
             fired += self.det.observe_diff(adopted, _hash_sources(self.ws))
         return new_t, fired
 
