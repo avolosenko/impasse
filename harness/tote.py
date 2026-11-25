@@ -156,7 +156,8 @@ class Tote:
             rows.append(f"- iter {a['iter']}: [{h.get('category')}] {h.get('claim', '')[:160]} | op={a.get('operation')} "
                         f"| failing {a.get('failing_before')}->{a.get('failing_after')}"
                         f"{' | ROLLED BACK (regression)' if a.get('rolled_back') else ''}"
-                        f" | diff: {a.get('diff_summary', '')}")
+                        f" | diff: {a.get('diff_summary', '')}"
+                        f"{_result_brief(a.get('result'))}")
         return "\n".join(rows) or "(none)"
 
     def _write_state(self, t: TestRun, it: int) -> None:
@@ -225,11 +226,11 @@ class Tote:
             return None
 
     def operate(self, t: TestRun, h: Hypothesis, op: PlanOperation, ws: Workspace, tr: Transcript,
-                triggers: list[str], seed: int | None):
+                triggers: list[str], seed: int | None, extra: str = ""):
         skills = self.skills.select("operate", op.operation, triggers)
         self._note_loaded(skills)
         task = (f"Goal: {self._goal()}\n\nYour operation: {op.operation} — {op.reason}\n"
-                f"Rules for this operation: {OP_NOTES[op.operation]}\n"
+                f"Rules for this operation: {OP_NOTES[op.operation]}\n{extra}"
                 f"Hypothesis to act on: {h.claim}\nLocation: {h.location}\nPrediction: {h.prediction}\n\n"
                 f"{self._test_block(t)}\n\nPrevious attempts (do not repeat failed ones):\n{self._attempts_brief()}")
         return run_subagent(self.worker, ws, task, skills, self.budget, tr,
@@ -293,10 +294,9 @@ class Tote:
         for k in range(self.cfg.child_iterations):
             if self.budget.llm_calls >= cap:
                 break
-            child_op = PlanOperation(operation="minimal_repro", reason=(
-                f"{op.reason}\nChild goal: write a run_python script that FAILS with {exc} exactly like the test "
-                f"(raise or assert on the wrong value). The harness re-runs your last script to check it.{feedback}"))
-            out = self.operate(t, h, child_op, ws, tr, triggers, self._seed(it, i, 10 + k))
+            extra = (f"Child goal: write a run_python script that FAILS with {exc} exactly like the test "
+                     f"(raise or assert on the wrong value). The harness re-runs your last script to check it.{feedback}\n")
+            out = self.operate(t, h, op, ws, tr, triggers, self._seed(it, i, 10 + k), extra=extra)
             ok, output = _repro_reproduces(ws, out.last_python, exc)
             if ok:
                 out.result = StageResult(status="done", hypothesis=h.claim, confidence="medium",
@@ -449,6 +449,13 @@ class Tote:
 
 def _files_of(root: Path) -> dict[str, str]:
     return Workspace(root).source_files()
+
+
+def _result_brief(r: dict | None) -> str:
+    if not r:
+        return " | result: none (no finish)"
+    ev = (r.get("evidence") or "")[:200]
+    return f" | result: {r.get('status')}" + (f" — {ev}" if ev else "")
 
 
 def _exception_name(t: TestRun) -> str:

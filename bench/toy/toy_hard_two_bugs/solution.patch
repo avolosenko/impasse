@@ -1,0 +1,19 @@
+--- a/ledger.py
++++ b/ledger.py
+@@ -2,6 +2,6 @@
+ 
+ 
+ class Ledger:
+-    def __init__(self, entries=[]):
+-        self.entries = entries
++    def __init__(self, entries=None):
++        self.entries = list(entries) if entries is not None else []
+ 
+     def add(self, category, amount):
+--- a/money.py
++++ b/money.py
+@@ -5,3 +5,3 @@
+         return int(text) * 100
+     whole, frac = text.split(".")
+-    return int(whole) * 100 + int(frac)
++    return int(whole) * 100 + int((frac + "0")[:2])

@@ -201,3 +201,23 @@ def test_depth3_child_gives_up_and_depth2_has_no_child(tmp_path):
               MockLLM([act("run_python", code=REPRO_WEAK), finish()]), cfg=ToteConfig(max_depth=2, max_iterations=1))
     o2 = t2.run()
     assert o2.max_depth_reached == 2 and o2.llm_calls == 4
+
+
+def test_depth3_child_with_long_plan_reason(tmp_path):
+    """Regression: the child instruction used to be glued into PlanOperation.reason (max 300 chars)."""
+    long_plan = {"operation": "minimal_repro", "reason": "r" * 290}
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs", MockLLM([hyp(), long_plan]),
+             MockLLM([act("run_python", code=REPRO_OK), finish()]), cfg=ToteConfig(max_depth=3, max_iterations=1))
+    o = t.run()
+    assert o.max_depth_reached == 3 and o.reason == "max_iterations"
+
+
+def test_attempt_log_shows_stage_results_to_the_model(tmp_path):
+    """Regression: the planner must see that a diagnosis already succeeded."""
+    worker = MockLLM([act("finish", status="done", evidence="windows.py:6 range stops one early"),
+                      act("apply_patch", **FIX), finish()])
+    t = Tote(TOY / "toy_off_by_one", tmp_path / "runs",
+             MockLLM([hyp(), plan("read_more_code"), hyp(), plan()]), worker)
+    assert t.run().solved
+    second_plan_prompt = t.interpreter.calls[3]["messages"][1]["content"]
+    assert "result: done — windows.py:6 range stops one early" in second_plan_prompt

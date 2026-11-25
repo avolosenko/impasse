@@ -1,0 +1,20 @@
+{
+  "task_id": "toy_hard_two_bugs",
+  "reason": "detector:step_limit",
+  "detectors": [
+    "step_limit"
+  ],
+  "detector_fires": {
+    "step_limit": 1
+  },
+  "skills_loaded": [],
+  "iterations": 1,
+  "llm_calls": 35,
+  "hypotheses": [
+    "boundaries",
+    "state_mutation",
+    "data_flow",
+    "condition_logic"
+  ],
+  "regressions": 0
+}

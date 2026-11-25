@@ -1,0 +1,19 @@
+{
+  "task_id": "toy_hard_two_bugs",
+  "reason": "detector:same_error_x3",
+  "detectors": [
+    "same_error_x3"
+  ],
+  "detector_fires": {
+    "same_error_x3": 1
+  },
+  "skills_loaded": [],
+  "iterations": 3,
+  "llm_calls": 17,
+  "hypotheses": [
+    "Parsing Error",
+    "Logic Error",
+    "Logic Error"
+  ],
+  "regressions": 0
+}
