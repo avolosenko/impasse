@@ -21,6 +21,7 @@ bench/test/
 # Escalation packages of stage-2 harness dev runs on toy tasks (not teacher input)
 escalations/stage2*/
 escalations/policy-*/
+escalations/stage4-*/
 
 # Unsealed val split must never be committed (sealed archive only)
 bench/val/
