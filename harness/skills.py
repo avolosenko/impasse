@@ -44,8 +44,11 @@ class SkillLibrary:
                 self.skills[s.name] = s
 
     def for_operation(self, phase: str, operation: str | None) -> list[Skill]:
+        """Skills of `phase` for `operation`; `applies_to_operation: ["*"]` means every
+        call of that phase (e.g. hypothesis skills, which have no operation)."""
         return [s for s in self.skills.values()
-                if s.phase == phase and operation and operation in s.applies_to_operation]
+                if s.phase == phase and ("*" in s.applies_to_operation
+                                         or (operation and operation in s.applies_to_operation))]
 
     def for_trigger(self, trigger: str) -> list[Skill]:
         return [s for s in self.skills.values() if trigger in s.triggers]

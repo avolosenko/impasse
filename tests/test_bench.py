@@ -115,3 +115,11 @@ def test_validator_works_with_relative_task_path(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     errs, _, _ = validate_bench.check_task(Path("train/x_train_1"), CANARY, PLAN, "train")
     assert errs == [], errs
+
+
+def test_leak_check_ignores_plain_words_but_flags_long_defs():
+    src = "def extremes(report, time):\n    kind = report\n    return kind\n\nclass Ab:\n    pass\n"
+    ids = leak_check.identifiers(src)
+    assert "extremes" in ids                      # function name, 8 chars
+    assert not {"report", "time", "kind"} & ids   # plain words used as variables
+    assert "Ab" not in ids                        # too short

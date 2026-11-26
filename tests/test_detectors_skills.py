@@ -61,3 +61,12 @@ def test_skill_parse_and_select(tmp_path):
     assert lib.select("operate", "bisect", []) == []
     assert [x.name for x in lib.select("operate", None, ["same_error_x3"])] == ["debug-same-error-loop"]
     assert SkillLibrary(None).skills == {}
+
+
+def test_wildcard_skill_loads_for_every_call_of_its_phase(tmp_path):
+    (tmp_path / "h").mkdir()
+    (tmp_path / "h" / "SKILL.md").write_text(
+        "---\nname: h\nphase: hypothesize\napplies_to_operation: ['*']\n---\nbody\n")
+    lib = SkillLibrary(tmp_path)
+    assert [s.name for s in lib.select("hypothesize", None, [])] == ["h"]
+    assert lib.select("operate", "local_fix", []) == []
