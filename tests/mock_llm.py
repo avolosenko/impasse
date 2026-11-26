@@ -28,6 +28,9 @@ class MockLLM:
             r.parsed = parse_structured(text, kw["schema"])
         return r
 
+    def close(self) -> None:
+        pass
+
 
 def act(action: str, thought: str = "t", **args: str) -> dict:
     return {"action": action, "args": args, "thought": thought}

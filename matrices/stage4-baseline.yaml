@@ -1,0 +1,11 @@
+# Stage 4 baselines (SPEC 6): B0, B1 (no skills), B2 (skills-v0), train + test.
+# detector_policy is filled in after the val selection (matrices/stage4-policy.yaml).
+series: stage4-baseline
+models: [qwen-9b, qwen-4b]
+seeds: [1, 2, 3]
+splits: [train, test]
+common: {max_llm_calls: 150, detector_policy: TBD}
+configs:
+  - {id: B0, b0: true}
+  - {id: B1}
+  - {id: B2, skills: skills, library: skills-v0}
