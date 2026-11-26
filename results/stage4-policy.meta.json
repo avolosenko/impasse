@@ -1,7 +1,7 @@
 {
   "series": "stage4-policy",
-  "written_at": "2026-11-25T19:43:24",
-  "harness_commit": "099550c1ceb83e21bec75a28c5f5ed364c138a35",
+  "written_at": "2026-11-26T10:34:37",
+  "harness_commit": "b0db9ab9b6c318d7e64ff931e8afa9bfbcc0d531",
   "harness_dirty": false,
   "skills_tree": "3ad63ffab2e4d5bd84702f1972eb5ff37812238a",
   "llama_cpp_commit": "e6443bd7eb970d940b0669cd9ea0d82d91d620a1",
