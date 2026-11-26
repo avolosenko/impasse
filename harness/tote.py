@@ -57,7 +57,7 @@ class ToteConfig:
     max_iterations: int = 12
     max_wall_time_s: float = 1800
     max_llm_calls: int = 150
-    subagent_steps: int = 8
+    subagent_steps: int = 12          # SPEC 3.3 default is 8; raised by user decision before baseline (stage 2 report)
     seed: int | None = None
     breadth: int = 1
     # strict: SPEC 3.6 literally — every iteration counts, a detector with no skill escalates at once.
