@@ -1,0 +1,17 @@
+# Fixed catalog of hypothesis categories (SPEC 4.4). General debugging knowledge only.
+# With breadth > 1 the harness assigns a different category to every branch.
+categories:
+  - id: boundaries
+    hint: off-by-one, range ends, empty and single-element inputs, inclusive vs exclusive limits
+  - id: state_mutation
+    hint: shared or mutated state, aliasing, default mutable arguments, stale values
+  - id: data_flow
+    hint: a value passed between functions or modules in the wrong form, order or unit
+  - id: condition_logic
+    hint: wrong comparison, negation, and/or, missing or wrong branch
+  - id: types_formats
+    hint: parsing, string/number conversion, formatting, encoding, rounding
+  - id: call_order
+    hint: operations done in the wrong order, missing call, call repeated, wrong initialisation
+  - id: elsewhere
+    hint: the failing line is only a symptom; the cause is in a different function or module

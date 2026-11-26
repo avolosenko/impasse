@@ -1,0 +1,9 @@
+--- a/windows.py
++++ b/windows.py
+@@ -4,5 +4,5 @@
+         raise ValueError("k must be positive")
+     out = []
+-    for i in range(len(xs) - k):
++    for i in range(len(xs) - k + 1):
+         out.append(sum(xs[i:i + k]))
+     return out
