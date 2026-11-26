@@ -17,3 +17,7 @@ runs/
 
 # Unsealed test split must never be committed
 bench/test/
+
+# Escalation packages of stage-2 harness dev runs on toy tasks (not teacher input)
+escalations/stage2*/
+escalations/policy-*/

@@ -1,6 +1,0 @@
-{
-  "task_id": "toy_hard_two_bugs",
-  "reason": "step_limit",
-  "config": "B0",
-  "llm_calls": 60
-}
