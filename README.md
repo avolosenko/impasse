@@ -51,7 +51,7 @@ Solved subgoals are logged for chunking into macro-skills.
 |---|---|---|
 | 1 | Infrastructure: server control, LLM client, smoke test | done ([report](reports/stage-1.md)) |
 | 2 | Harness: FIX2 state machine, subagents, sandbox, detectors, escalation, B0, K branches, depth 3 | done ([report](reports/stage-2.md)) |
-| 3 | Benchmark + `skills-v0` | — |
+| 3 | Benchmark (35 tasks: 14 train open, 7 val + 14 test sealed) + `skills-v0` | awaiting review ([report](reports/stage-3.md)) |
 | 4–6 | Baselines, case memory, stack, learning, analysis | — |
 
 ## Requirements
