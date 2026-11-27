@@ -123,3 +123,13 @@ def test_leak_check_ignores_plain_words_but_flags_long_defs():
     assert "extremes" in ids                      # function name, 8 chars
     assert not {"report", "time", "kind"} & ids   # plain words used as variables
     assert "Ab" not in ids                        # too short
+
+
+def test_leak_check_ignores_builtin_exception_names():
+    import importlib.util
+    p = Path(__file__).resolve().parent.parent / "tools" / "leak_check.py"
+    spec = importlib.util.spec_from_file_location("lc", p)
+    lc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lc)
+    ids = lc.identifiers("class ParseFailure(ValueError):\n    pass\nraise ValueError('x')\n")
+    assert "ValueError" not in ids and "ParseFailure" in ids

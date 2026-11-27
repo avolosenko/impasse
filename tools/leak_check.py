@@ -68,7 +68,7 @@ def identifiers(source: str) -> set[str]:
         elif isinstance(node, ast.Constant) and isinstance(node.value, str):
             other.update(w for w in re.findall(r"[A-Za-z_][A-Za-z0-9_]{3,}", node.value) if "_" in w)
     keep = {i for i in defs | other if _compound(i)} | {d for d in defs if len(d) >= 7}
-    return {i for i in keep if len(i) >= MIN_LEN and i.lower() not in GENERIC and not i.startswith("__")
+    return {i for i in keep if len(i) >= MIN_LEN and i not in GENERIC and i.lower() not in GENERIC and not i.startswith("__")
             and not i.startswith("test_")}
 
 

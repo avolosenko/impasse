@@ -22,6 +22,7 @@ bench/test/
 escalations/stage2*/
 escalations/policy-*/
 escalations/stage4-*/
+escalations/stage4a-*/
 
 # Unsealed val split must never be committed (sealed archive only)
 bench/val/
