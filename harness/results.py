@@ -53,6 +53,8 @@ def row(outcome: dict, *, run_id: str, task_dir: Path, config: str, model: str, 
              suspicious_solve=int(outcome.get("suspicious_solve", False)))
     hit = outcome.get("hypothesis_hit")
     r["hypothesis_hit"] = "" if hit is None else int(hit)
+    r["hit_hypothesis_source"] = outcome.get("hit_hypothesis_source") or ""
+    r["cases_retrieved"] = outcome.get("cases_retrieved", "")
     fh = outcome.get("first_hit_iteration")
     r["first_hit_iteration"] = "" if fh is None else fh
     return r

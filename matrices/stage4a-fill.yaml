@@ -1,0 +1,10 @@
+# Stage 4a, step 1 (SPEC 4.6, 10/4a): fill the case memory on train with B2 (skills-v0,
+# detector policy from stage 4). Cases are recorded after solved train tasks only; nothing is
+# retrieved while recording. One memory per model: the model's own experience.
+series: stage4a-fill
+models: [qwen-9b, qwen-4b]
+seeds: [1, 2, 3]
+splits: [train]
+common: {max_llm_calls: 150, detector_policy: lenient, skills: skills, library: skills-v0}
+configs:
+  - {id: B2-rec, record_memory: "memory/cases-v0-{model}.jsonl"}

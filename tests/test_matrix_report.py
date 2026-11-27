@@ -101,3 +101,20 @@ def test_suspicious_undefined_for_b0():
         r["orchestration"] = "B0"
     assert "| B0 | m | train | 1 | 1 | 100% |" in make_report.render(rows, "t")
     assert make_report.solve_table(rows)[-1].endswith("| — |")
+
+
+def test_run_job_never_records_cases_from_test(tmp_path, monkeypatch):
+    fix = dict(path="windows.py", old="range(len(xs) - k)", new="range(len(xs) - k + 1)")
+    replies = {"interpreter": [hyp(), plan(), {"claim_abstract": "A loop over a range stops one item early."}],
+               "worker": [act("apply_patch", **fix), act("finish", status="done")]}
+    monkeypatch.setattr(run_matrix.LLMClient, "for_role",
+                        classmethod(lambda cls, cfg, role, **kw: MockLLM(list(replies[role]))))
+    monkeypatch.setattr(run_matrix, "ROOT", tmp_path)
+    monkeypatch.setattr(run_matrix, "_MEMORIES", {})
+    c = {"id": "B2-rec", "record_memory": "memory/cases-{model}.jsonl"}
+    for split in ("test", "train"):
+        job = {"config": c, "seed": 1, "split": split, "task": TOY / "toy_off_by_one", "model": "m"}
+        r = run_matrix.run_job(job, cfg=None, series="s", csv_path=tmp_path / f"{split}.csv", lock=threading.Lock())
+        assert r["solved"] == 1
+        assert (tmp_path / "memory" / "cases-m.jsonl").exists() == (split == "train")
+    assert r["memory_version"] == "recording:cases-m"
