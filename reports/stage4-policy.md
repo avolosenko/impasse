@@ -93,5 +93,5 @@ Cells: detector fires per run.
 | B1-strict | qwen-9b | val | 21 | 24% | 1 |
 | B2-lenient | qwen-4b | val | 21 | 33% | 2 |
 | B2-lenient | qwen-9b | val | 21 | 52% | 3 |
-| B2-strict | qwen-4b | val | 21 | 29% | 1.0 |
+| B2-strict | qwen-4b | val | 21 | 29% | 1 |
 | B2-strict | qwen-9b | val | 21 | 33% | 2 |

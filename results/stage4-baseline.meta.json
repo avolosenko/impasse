@@ -1,7 +1,7 @@
 {
   "series": "stage4-baseline",
-  "written_at": "2026-11-26T11:10:41",
-  "harness_commit": "7925cdd1c36097597f4b15220621c6232ab76a5e",
+  "written_at": "2026-11-26T15:56:24",
+  "harness_commit": "7a36d7ffbdc468d10d2afdab4d67ce26dc130b8b",
   "harness_dirty": false,
   "skills_tree": "3ad63ffab2e4d5bd84702f1972eb5ff37812238a",
   "llama_cpp_commit": "e6443bd7eb970d940b0669cd9ea0d82d91d620a1",

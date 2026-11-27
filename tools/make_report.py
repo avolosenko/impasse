@@ -68,7 +68,8 @@ def solve_table(rows) -> list[str]:
         lo, hi = bootstrap_ci(rates)
         solved = [r for r in rs if _i(r["solved"])]
         calls = statistics.fmean(_i(r["total_llm_calls"]) for r in solved) if solved else float("nan")
-        susp = sum(_i(r.get("suspicious_solve")) for r in rs)
+        # suspicious = solving edit misses the stated hypothesis location: undefined without hypotheses (B0)
+        susp = "—" if all(r.get("orchestration") == "B0" for r in rs) else sum(_i(r.get("suspicious_solve")) for r in rs)
         lines.append(f"| {cfg} | {model} | {split} | {len(rates)} | {len(rs)} | {pct(statistics.fmean(rates))} | "
                      f"{pct(lo)}–{pct(hi)} | {'—' if calls != calls else f'{calls:.0f}'} | {susp} |")
     return lines
@@ -129,6 +130,7 @@ def hypotheses(rows) -> list[str]:
         hit = statistics.fmean(_i(r["hypothesis_hit"]) for r in hs)
         firsts = [_i(r["first_hit_iteration"]) for r in hs if r.get("first_hit_iteration")]
         med = statistics.median(firsts) if firsts else float("nan")
+        med = int(med) if med == med and med == int(med) else med
         lines.append(f"| {cfg} | {model} | {split} | {len(hs)} | {pct(hit)} | {'—' if med != med else med} |")
     return lines
 

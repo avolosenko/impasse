@@ -93,3 +93,11 @@ def test_render_has_all_sections():
         assert section in text
     assert "| B2 | m | train | 2 | 2 | 100% |" in text
     assert "| B2 | m | train | local-fix | 2 | 100% |" in text
+
+
+def test_suspicious_undefined_for_b0():
+    rows = _rows([("B0", "a", 1, 1)])
+    for r in rows:
+        r["orchestration"] = "B0"
+    assert "| B0 | m | train | 1 | 1 | 100% |" in make_report.render(rows, "t")
+    assert make_report.solve_table(rows)[-1].endswith("| — |")
